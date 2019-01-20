@@ -33,19 +33,17 @@ def main():
     banger.start()
 
     # Push in a READ message - per page 16 of ST 022580 Rev 8.
-    log.info("Sending READ starting from address 0xFFFF")
-    request.put(
-        [0, 0, 0, 0, 0, 0, 1, 1].extend(
-            # Start the READ from 0x0000. Per page 23 of ST 022580 Rev 8,
-            # if we continue to drive CS low - which we do as part of the
-            # banger - then "the internal address register is incremented
-            # automatically". This allows us to read the ENTIRE contents
-            # of the EEPROM with a "single READ instruction". Just bang
-            # in a read, keep CS low, and keep reading until we've had our
-            # fill.
-            [0b0] * 16,
-        )
-    )
+    log.info("Sending READ starting from address 0x0000")
+
+    # Start the READ from 0x0000. Per page 23 of ST 022580 Rev 8, if we
+    # continue to drive CS low - which we do as part of the banger - then
+    # "the internal address register is incremented automatically". This
+    # allows us to read the ENTIRE contents of the EEPROM with a "single READ
+    # instruction". Just bang in a read, keep CS low, and keep reading until
+    # we've had our fill.
+    operation = [0, 0, 0, 0, 0, 0, 1, 1]
+    operation.extend([0b0] * 16)
+    request.put(operation)
 
     # ...and fetch the response!
     # read = 0
