@@ -51,7 +51,7 @@ class Executor(multiprocessing.Process):
 
         # Setup the clock interval. This isn't the cycle time, but half the
         # target cycle time.
-        self.clock_interval = 0.001
+        self.clock_interval = 0.0
 
         # Setup the interface, ensuring that MISO is set to GPIO IN.
         self.gpio = GpioController()

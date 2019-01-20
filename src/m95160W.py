@@ -67,7 +67,7 @@ def main():
     with open('eeprom.bin', 'wb') as fout:
         read = 0
 
-        while read <= size:
+        while read < size:
             payload = response.get()
             log.debug(
                 "Response from EEPROM was: %s (%s)",
