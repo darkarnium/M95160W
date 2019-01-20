@@ -142,8 +142,8 @@ class Executor(multiprocessing.Process):
             # If there's anything in the queue, bang away.
             if self._in.qsize() > 0:
                 self._write_bits(self._in.get())
-                result = self._read_bits(2048)
-                return result 
+                result = self._read_bits(8)
+                return result
             else:
                 # If no data is pending send, make sure we still drive the
                 # clock.
