@@ -78,8 +78,8 @@ def main():
             fout.write(struct.pack('B', bits_to_bytes(payload)))
 
     # Done, so write!
-    log.info("Read all %s bits of EEPROM!")
-    sys.exit(0)
+    log.info("Read %s bits of EEPROM!", read)
+    banger.terminate()
 
 
 if __name__ == '__main__':
