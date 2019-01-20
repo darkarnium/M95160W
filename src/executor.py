@@ -66,8 +66,8 @@ class Executor(multiprocessing.Process):
         )
 
         # Set the initial GPIO state.
-        self.log.debug("Setting the initial GPIO state to %s", self.state)
         self.gpio.write_port(self.state)
+        self.log.debug("Set the initial GPIO state to %s", self.state)
 
     def _write_bits(self, bits):
         ''' Write bits onto the wire (Master to Target) communication. '''
