@@ -62,17 +62,16 @@ def main():
     })
 
     # ...and fetch the response!
+    log.info("Starting read, will output to %s", 'eeprom.bin')
     with open('eeprom.bin', 'wb') as fout:
         read = 0
-        result = []
 
         while read <= size:
             payload = response.get()
-            result.extend(payload)
-            log.info(
+            log.debug(
                 "Response from EEPROM was: %s (%s)",
-                "{0:08b}".format(payload),
-                "0x{0:04x}".format(payload),
+                "{0:08b}".format(bits_to_bytes(payload)),
+                "0x{0:04x}".format(bits_to_bytes(payload)),
             )
             read += len(payload)
             fout.write(bits_to_bytes(payload))
