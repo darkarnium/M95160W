@@ -47,7 +47,7 @@ class Executor(multiprocessing.Process):
         self.clk = clk
         self.miso = miso
         self.mosi = mosi
-        # self.cs = cs
+        self.cs = cs
 
         # Setup the clock interval. This isn't the cycle time, but half the
         # target cycle time.
@@ -85,8 +85,14 @@ class Executor(multiprocessing.Process):
             # transmitted (where HIGH is 1).
             if bit == 1:
                 self.state |= self.mosi
+                # Debug
+                self.state |= self.cs
+                self.state |= self.miso
             else:
                 self.state &= ~self.mosi
+                # Debug
+                self.state &= ~self.cs
+                self.state &= ~self.miso
 
             # Send data via MOSI on the FALLING-edge of the clock.
             self.state &= ~self.clk
