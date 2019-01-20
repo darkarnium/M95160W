@@ -2,6 +2,7 @@
 
 import sys
 import time
+import struct
 import logging
 import binascii
 import multiprocessing
@@ -74,7 +75,7 @@ def main():
                 "0x{0:02x}".format(bits_to_bytes(payload)),
             )
             read += len(payload)
-            fout.write(chr(bits_to_bytes(payload)))
+            fout.write(struct.pack('B', bits_to_bytes(payload)))
 
     # Done, so write!
     log.info("Read all %s bits of EEPROM!")
