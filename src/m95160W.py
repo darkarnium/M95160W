@@ -1,11 +1,23 @@
 ''' Attempts to dump an M95160W EEPROM using an FT2232H. '''
 
+import sys
 import time
 import logging
 import binascii
 import multiprocessing
 
 import executor
+
+
+def bits_to_bytes(data):
+    ''' Convert a list of bits to bytes. '''
+    result = 0x0
+
+    data.reverse()
+    for idx, bit in enumerate(data):
+        result |= bit << idx
+
+    return result
 
 
 def main():
@@ -41,21 +53,34 @@ def main():
     # allows us to read the ENTIRE contents of the EEPROM with a "single READ
     # instruction". Just bang in a read, keep CS low, and keep reading until
     # we've had our fill.
+    size = 2048
     operation = [0, 0, 0, 0, 0, 0, 1, 1]
     operation.extend([0b0] * 16)
-    request.put(operation)
+    request.put({
+        "bits": operation,
+        "size": 2048,
+    })
 
     # ...and fetch the response!
-    # read = 0
-    # size = 2048
-    # while read <= size:
-    # payload = response.get()
-    # log.info(
-    #     "Response from EEPROM was: %s (%s)",
-    #     "{0:08b}".format(payload),
-    #     "0x{0:04x}".format(payload),
-    # )
-    # read += len(payload)
+    with open('eeprom.bin', 'wb') as fout:
+        read = 0
+        result = []
+
+        while read <= size:
+            payload = response.get()
+            result.extend(payload)
+            log.info(
+                "Response from EEPROM was: %s (%s)",
+                "{0:08b}".format(payload),
+                "0x{0:04x}".format(payload),
+            )
+            read += len(payload)
+            fout.write(bits_to_bytes(payload))
+
+    # Done, so write!
+    log.info("Read all %s bits of EEPROM!")
+    sys.exit(0)
+
 
 if __name__ == '__main__':
     main()

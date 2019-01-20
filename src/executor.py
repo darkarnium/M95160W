@@ -145,12 +145,12 @@ class Executor(multiprocessing.Process):
         while True:
             # If there's anything in the queue, bang away.
             if self._in.qsize() > 0:
-                self._write_bits(self._in.get())
+                request = self._in.get()
+                self._write_bits(request['bits'])
                 r = 0
-                while r <= 2048:
+                while r <= request['size']:
                     result = self._read_bits(8)
                     r += 8
-                    self.log.debug("Read: %s", result)
                     self._out.put(result)
             else:
                 # If no data is pending send, make sure we still drive the
