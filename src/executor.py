@@ -51,7 +51,7 @@ class Executor(multiprocessing.Process):
 
         # Setup the clock interval. This isn't the cycle time, but half the
         # target cycle time.
-        self.clock_interval = 1.0
+        self.clock_interval = 0.001
 
         # Setup the interface, ensuring that MISO is set to GPIO IN.
         self.gpio = GpioController()
@@ -74,8 +74,9 @@ class Executor(multiprocessing.Process):
         self.log.debug("Starting banging bits (%s)", bits)
 
         for bit in bits:
-            # Pull the clock HIGH.
+            # Pull the clock HIGH, and drive CS low.
             self.state |= self.clk
+            self.state |= self.cs
             self.gpio.write_port(self.state)
             time.sleep(self.clock_interval)
 
@@ -94,6 +95,33 @@ class Executor(multiprocessing.Process):
         # If there's not a Logic Analyser connected, determining when all
         # data has been sent is a pain. Thus, this.
         self.log.debug("Finished banging bits")
+
+    def _read_bits(self, count):
+        ''' Reads N bits from the wire. '''
+        self.log.debug("Reading %s bits", count)
+
+        result = []
+        for _ in range(count):
+            # Data will be banged onto the wire by the target device on the
+            # RISING edge.
+            self.state |= self.clk
+            self.gpio.write_port(self.state)
+
+            # Finally, read the state of MISO to determine the value sent by
+            # the target.
+            if(self.gpio.read() & self.miso) == self.miso:
+                result.append(1)
+            else:
+                result.append(0)
+
+            # Sleep and then drive the clock LOW to complete the cycle.
+            time.sleep(self.clock_interval)
+            self.state &= ~self.clk
+            self.gpio.write_port(self.state)
+            time.sleep(self.clock_interval)
+
+        self.log.debug("Read %s", result)
+        return result
 
     def _write_clock(self):
         ''' 'Write' a clock cycle without sending any data. '''
@@ -114,88 +142,8 @@ class Executor(multiprocessing.Process):
             # If there's anything in the queue, bang away.
             if self._in.qsize() > 0:
                 self._write_bits(self._in.get())
+                return self._read_bits(8)
             else:
                 # If no data is pending send, make sure we still drive the
                 # clock.
                 self._write_clock()
-
-    # def _read_bits(self, count):
-    #     ''' Reads N bits from the wire (Target to Master) communication. '''
-    #     self.log.debug("Reading %s bits", count)
-
-    #     # First, ensure that the SWDIO pin is set to IN, rather than OUT, and
-    #     # leave it the fuck alone.
-    #     self.gpio.set_direction(self.swdio, 0x0)
-
-    #     result = []
-    #     for _ in range(count):
-    #         # Data will be banged onto the wire by the target device on the
-    #         # RISING edge.
-    #         self.state |= self.swclk
-    #         self.gpio.write_port(self.state)
-
-    #         # Finally, read the state of SWDIO to determine the value sent by
-    #         # the target.
-    #         if(self.gpio.read() & self.swdio) == self.swdio:
-    #             result.append(1)
-    #         else:
-    #             result.append(0)
-
-    #         # Sleep and then drive the clock LOW to complete the cycle.
-    #         time.sleep(self.clock)
-    #         self.state &= ~self.swclk
-    #         self.gpio.write_port(self.state)
-    #         time.sleep(self.clock)
-
-    #     self.log.debug("Read %s", result)
-    #     return result
-
-
-    # def _check_ack(self):
-    #     ''' Convenience method to handle ACKs. '''
-    #     # TODO: Handle SWD_ACK_WAIT.
-    #     ack = helpers.bits_to_bytes(self._read_bits(3))
-    #     if ack != swd.SWD_ACK_OK:
-    #         raise Exception("SWD ACK response was NOT OK")
-
-    # def run(self):
-    #     ''' Starts clocking SWCLK, and banging bits onto SWDIO as needed. '''
-    #     self.log.info("Bit banger clock and monitor started")
-    #     while True:
-    #         # Ensure data is sent, if there is anything in the queue.
-    #         if self._in.qsize() > 0:
-    #             request = self._in.get()
-    #             result = []
-
-    #             # Write the request, and read results - if required.
-    #             self._write_bits(request['CMD'])
-    #             if request['ACK']:
-    #                 # 'Turn-round' so the target can control SWDIO.
-    #                 self._write_clock()
-    #                 self._check_ack()
-
-    #                 # Reading data and writing data are mutually exclusive in
-    #                 # a single operation - with the exception of ACKs - so
-    #                 # we don't allow both.
-    #                 if request['DATA']:
-    #                     # 'Turn-round' so the host can again control SWDIO.
-    #                     self._write_clock()
-    #                     self._write_bits(request['DATA'])
-    #                 elif request['READ']:
-    #                     # 32-bits for the payload, plus the parity, and then
-    #                     # 'turn-round' again to return control of SWDIO to
-    #                     # the host.
-    #                     result = self._read_bits(33)
-    #                     self._read_bits(1)
-
-    #                 # Complete the operation by clocking out 8 more rising
-    #                 # edges.
-    #                 self._write_bits([0b0] * 8)
-
-    #             # A result is always sent back to the main thread, even if
-    #             # empty. This allows it to confirm requests were serviced.
-    #             self._out.put(result)
-    #         else:
-    #             # If no data is pending send, make sure we still drive the
-    #             # clock.
-    #             self._write_clock()
