@@ -54,12 +54,12 @@ def main():
     # allows us to read the ENTIRE contents of the EEPROM with a "single READ
     # instruction". Just bang in a read, keep CS low, and keep reading until
     # we've had our fill.
-    size = 2048
+    size = 16384
     operation = [0, 0, 0, 0, 0, 0, 1, 1]
     operation.extend([0b0] * 16)
     request.put({
         "bits": operation,
-        "size": 16384,
+        "size": size,
     })
 
     # ...and fetch the response!
