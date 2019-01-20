@@ -76,7 +76,7 @@ class Executor(multiprocessing.Process):
         for bit in bits:
             # Pull the clock HIGH, and drive CS low.
             self.state |= self.clk
-            self.state |= self.cs
+            self.state &= ~self.cs
             self.gpio.write_port(self.state)
             time.sleep(self.clock_interval)
 
@@ -142,7 +142,8 @@ class Executor(multiprocessing.Process):
             # If there's anything in the queue, bang away.
             if self._in.qsize() > 0:
                 self._write_bits(self._in.get())
-                return self._read_bits(8)
+                result = self._read_bits(2048)
+                return result 
             else:
                 # If no data is pending send, make sure we still drive the
                 # clock.

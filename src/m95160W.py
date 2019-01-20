@@ -55,7 +55,7 @@ def main():
         "{0:08b}".format(payload),
         "0x{0:04x}".format(payload),
     )
-        # read += len(payload)
+    # read += len(payload)
 
 if __name__ == '__main__':
     main()
