@@ -146,11 +146,7 @@ class Executor(multiprocessing.Process):
                 while r <= 2048:
                     result = self._read_bits(8)
                     r += 8
-                    self.log.info(
-                        "Read: %s (0x%s)",
-                        '{0:08b}'.format(result),
-                        '{0:04x}'.format(result),
-                    )
+                    self.log.debug("Read: %s", result)
                     self._out.put(result)
             else:
                 # If no data is pending send, make sure we still drive the
