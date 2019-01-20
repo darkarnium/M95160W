@@ -49,12 +49,12 @@ def main():
     # read = 0
     # size = 2048
     # while read <= size:
-    payload = response.get()
-    log.info(
-        "Response from EEPROM was: %s (%s)",
-        "{0:08b}".format(payload),
-        "0x{0:04x}".format(payload),
-    )
+    # payload = response.get()
+    # log.info(
+    #     "Response from EEPROM was: %s (%s)",
+    #     "{0:08b}".format(payload),
+    #     "0x{0:04x}".format(payload),
+    # )
     # read += len(payload)
 
 if __name__ == '__main__':
