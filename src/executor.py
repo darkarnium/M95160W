@@ -42,7 +42,7 @@ class Executor(multiprocessing.Process):
         # Defaults are:
         #     Pin D0 - 0x01 - OUT (CLOCK)
         #     Pin D1 - 0x02 - OUT (MOSI)
-        #     Pin D2 - 0x04 - OUT (MISO)
+        #     Pin D2 - 0x04 - IN  (MISO)
         #     Pin D3 - 0x08 - OUT (CHIP SELECT)
         self.clk = clk
         self.miso = miso
