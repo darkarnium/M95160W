@@ -71,10 +71,10 @@ def main():
             log.debug(
                 "Response from EEPROM was: %s (%s)",
                 "{0:08b}".format(bits_to_bytes(payload)),
-                "0x{0:04x}".format(bits_to_bytes(payload)),
+                "0x{0:02x}".format(bits_to_bytes(payload)),
             )
             read += len(payload)
-            fout.write(bits_to_bytes(payload))
+            fout.write(chr(bits_to_bytes(payload)))
 
     # Done, so write!
     log.info("Read all %s bits of EEPROM!")
