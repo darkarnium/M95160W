@@ -31,8 +31,8 @@ class Executor(multiprocessing.Process):
         super(Executor, self).__init__()
         self.log = logging.getLogger(__name__)
 
-        # The initial state is everything pulled LOW.
-        self.state = 0x0
+        # The initial state is everything pulled HIGH.
+        self.state = 0xFF
 
         # Ensure the work queue is accessible - this is used for the parent
         # to push request to bang onto the wire.
@@ -51,7 +51,7 @@ class Executor(multiprocessing.Process):
 
         # Setup the clock interval. This isn't the cycle time, but half the
         # target cycle time.
-        self.clock_interval = 0.001
+        self.clock_interval = 0.01
 
         # Setup the interface, ensuring that MISO is set to GPIO IN.
         self.gpio = GpioController()
@@ -99,6 +99,10 @@ class Executor(multiprocessing.Process):
     def _read_bits(self, count):
         ''' Reads N bits from the wire. '''
         self.log.debug("Reading %s bits", count)
+
+        # This should already be the case, but ensure MISO isn't drive by
+        # the master (us).
+        self.gpio.set_direction(self.miso, 0x0)
 
         result = []
         for _ in range(count):
