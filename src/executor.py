@@ -55,21 +55,19 @@ class Executor(multiprocessing.Process):
 
         # Setup the interface, ensuring that MISO is set to GPIO IN.
         self.gpio = GpioController()
-        self.log.debug("Setting up FT2232 for GPIO")
+        direction = xor(0xFF, self.miso)
+        self.log.debug(
+            "Setting up FT2232 for GPIO (%s)",
+            "{0:08b}".format(direction)
+        )
         self.gpio.open_from_url(
             url='ftdi://0x0403:0x6010/1',
-            direction=0xFF # !!! CHANGE THIS ONCE TEST COMPLETE. !!!
+            direction=direction,
         )
 
         # Set the initial GPIO state.
         self.log.debug("Setting the initial GPIO state to %s", self.state)
         self.gpio.write_port(self.state)
-
-    def run(self):
-        ''' Noop. '''
-        while True:
-            self._write_bits([0,1,0,1])
-        pass
 
     def _write_bits(self, bits):
         ''' Write bits onto the wire (Master to Target) communication. '''
@@ -85,14 +83,8 @@ class Executor(multiprocessing.Process):
             # transmitted (where HIGH is 1).
             if bit == 1:
                 self.state |= self.mosi
-                # Debug
-                self.state |= self.cs
-                self.state |= self.miso
             else:
                 self.state &= ~self.mosi
-                # Debug
-                self.state &= ~self.cs
-                self.state &= ~self.miso
 
             # Send data via MOSI on the FALLING-edge of the clock.
             self.state &= ~self.clk
@@ -102,6 +94,30 @@ class Executor(multiprocessing.Process):
         # If there's not a Logic Analyser connected, determining when all
         # data has been sent is a pain. Thus, this.
         self.log.debug("Finished banging bits")
+
+    def _write_clock(self):
+        ''' 'Write' a clock cycle without sending any data. '''
+        # Pull the clock HIGH.
+        self.state |= self.clk
+        self.gpio.write_port(self.state)
+        time.sleep(self.clock_interval)
+
+        # Pull the clock LOW.
+        self.state &= ~self.clk
+        self.gpio.write_port(self.state)
+        time.sleep(self.clock_interval)
+
+    def run(self):
+        ''' Run the clock, and bang bits as required. '''
+        self.log.info("Bit banger clock and monitor started")
+        while True:
+            # If there's anything in the queue, bang away.
+            if self._in.qsize() > 0:
+                self._write_bits(self._in.get())
+            else:
+                # If no data is pending send, make sure we still drive the
+                # clock.
+                self._write_clock()
 
     # def _read_bits(self, count):
     #     ''' Reads N bits from the wire (Target to Master) communication. '''
@@ -134,17 +150,6 @@ class Executor(multiprocessing.Process):
     #     self.log.debug("Read %s", result)
     #     return result
 
-    # def _write_clock(self):
-    #     ''' 'Write' a clock cycle without sending any data. '''
-    #     # Pull the clock HIGH.
-    #     self.state |= self.swclk
-    #     self.gpio.write_port(self.state)
-    #     time.sleep(self.clock)
-
-    #     # Pull the clock LOW.
-    #     self.state &= ~self.swclk
-    #     self.gpio.write_port(self.state)
-    #     time.sleep(self.clock)
 
     # def _check_ack(self):
     #     ''' Convenience method to handle ACKs. '''
