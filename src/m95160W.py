@@ -30,7 +30,7 @@ def main():
     log = logging.getLogger()
 
     # NOTE: Enabling debug logging has an impact on clock jitter!
-    log.setLevel(logging.DEBUG)
+    # log.setLevel(logging.DEBUG)
 
     # We're using queues to communicate with the main execution process - 
     # which is responsible for doing the actual bit banging. This is in
@@ -59,7 +59,7 @@ def main():
     operation.extend([0b0] * 16)
     request.put({
         "bits": operation,
-        "size": 2048,
+        "size": 16384,
     })
 
     # ...and fetch the response!
